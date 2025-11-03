@@ -84,7 +84,7 @@ if section == "About":
     about_page()
 
 elif section == "Upload":
-    upload_file(sample_choice=sample_choice, use_sample=use_sample)
+    upload_file()
 
 elif section == "Explore":
     explore_data()
