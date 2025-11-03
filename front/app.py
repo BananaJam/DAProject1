@@ -80,8 +80,11 @@ st.title("📊 Customer Churn Prediction Analysis")
 st.caption("Upload customer data to predict churn probability using machine learning models")
 
 
-if section == "Upload":
-    upload_file()
+if section == "About":
+    about_page()
+
+elif section == "Upload":
+    upload_file(sample_choice=sample_choice, use_sample=use_sample)
 
 elif section == "Explore":
     explore_data()
@@ -89,8 +92,7 @@ elif section == "Explore":
 elif section == "Visualize":
     visualize_data()
 
+
 elif section == "Export":
     export_data()
 
-elif section == "About":
-    about_page()
