@@ -2,4 +2,9 @@ streamlit
 plotly
 pandas
 kagglehub
-
+ipykernel
+scikit-learn
+xgboost
+matplotlib
+seaborn
+numpy
