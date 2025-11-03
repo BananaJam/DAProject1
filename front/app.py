@@ -52,7 +52,10 @@ st.title("📊 Data Analysis UI Template")
 st.caption("Streamlit starter UI for quick data exploration and visualization")
 
 
-if section == "Upload":
+if section == "About":
+    about_page()
+
+elif section == "Upload":
     upload_file(sample_choice=sample_choice, use_sample=use_sample)
 
 elif section == "Explore":
@@ -61,8 +64,7 @@ elif section == "Explore":
 elif section == "Visualize":
     visualize_data()
 
+
 elif section == "Export":
     export_data()
 
-elif section == "About":
-    about_page()
