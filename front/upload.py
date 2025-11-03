@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
-from typing import Optional
-import plotly.express as px
+from typing import Optional, Tuple
 from state import set_df
 
 # ---------------------------
@@ -33,39 +32,75 @@ def load_uploaded_file(upload) -> Optional[pd.DataFrame]:
         return None
 
 
-def get_sample_data(choice: str) -> pd.DataFrame:
-    # plotly express ships small sample datasets (no extra deps)
-    if choice == "Iris":
-        return px.data.iris()
-    if choice == "Tips":
-        return px.data.tips()
-    if choice == "Gapminder":
-        return px.data.gapminder()
-    return pd.DataFrame()
+def validate_churn_dataset(df: pd.DataFrame) -> Tuple[bool, str]:
+    """
+    Validate that the dataset has the required columns for churn prediction.
+    Expected columns: CreditScore, Geography, Gender, Age, Tenure, Balance,
+                     NumOfProducts, HasCrCard, IsActiveMember, EstimatedSalary
+    """
+    required_cols = [
+        'CreditScore', 'Geography', 'Gender', 'Age', 'Tenure',
+        'Balance', 'NumOfProducts', 'HasCrCard', 'IsActiveMember', 'EstimatedSalary'
+    ]
+    
+    missing_cols = [col for col in required_cols if col not in df.columns]
+    
+    if missing_cols:
+        return False, f"Missing required columns: {', '.join(missing_cols)}"
+    
+    return True, "Dataset is valid for churn prediction"
+
 
 def upload_file(sample_choice: Optional[str] = None, use_sample: bool = False):
-    st.header("Upload a dataset")
-    st.write("Upload a CSV or Excel file, or load a sample dataset from the sidebar.")
+    st.header("📤 Upload Customer Data")
+    st.write("Upload a CSV or Excel file with customer data for churn prediction analysis.")
+    
+    st.info("""
+    **Required columns for churn prediction:**
+    - CreditScore, Geography, Gender, Age, Tenure
+    - Balance, NumOfProducts, HasCrCard, IsActiveMember, EstimatedSalary
+    """)
 
-    uploaded = st.file_uploader("Choose a file", type=["csv", "xlsx", "xls"], accept_multiple_files=False)
+    uploaded = st.file_uploader(
+        "Choose a CSV or Excel file", 
+        type=["csv", "xlsx", "xls"], 
+        accept_multiple_files=False
+    )
 
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        if uploaded is not None:
-            df = load_uploaded_file(uploaded)
-            if df is not None and not df.empty:
+    if uploaded is not None:
+        df = load_uploaded_file(uploaded)
+        if df is not None and not df.empty:
+            # Validate dataset
+            is_valid, message = validate_churn_dataset(df)
+            
+            if is_valid:
                 set_df(df)
-                st.success(f"Loaded {uploaded.name} with shape {df.shape}")
+                st.success(f"✓ Loaded {uploaded.name} with shape {df.shape}")
+                st.session_state.dataset_validated = True
+            else:
+                st.error(f"Dataset validation failed: {message}")
+                st.info("Please ensure your dataset contains all required columns.")
+                st.session_state.dataset_validated = False
         else:
-            st.info("No file selected yet.")
+            st.session_state.dataset_validated = False
+    else:
+        st.info("No file selected yet.")
+        st.session_state.dataset_validated = False
 
-    with col2:
-        if use_sample and sample_choice and sample_choice != "None":
-            df = get_sample_data(sample_choice)
-            set_df(df)
-            st.success(f"Loaded sample '{sample_choice}' with shape {df.shape}")
-
-    if "df" in st.session_state and not st.session_state.df.empty:
-        st.subheader("Preview")
+    if "df" in st.session_state and not st.session_state.df.empty and st.session_state.get("dataset_validated", False):
+        st.markdown("---")
+        st.subheader("📋 Data Preview")
         n_rows = st.slider("Rows to show", 5, 100, 10)
         st.dataframe(st.session_state.df.head(n_rows), use_container_width=True)
+        
+        # Show dataset info
+        st.markdown("---")
+        st.subheader("📊 Dataset Information")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Rows", len(st.session_state.df))
+        with col2:
+            st.metric("Total Columns", len(st.session_state.df.columns))
+        with col3:
+            numeric_cols = st.session_state.df.select_dtypes(include=['number']).columns
+            st.metric("Numeric Columns", len(numeric_cols))
